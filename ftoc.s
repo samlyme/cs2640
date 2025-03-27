@@ -10,12 +10,12 @@ main:
 	li	$v0, 5		# read int from system
 	syscall
 
-	# bad practice to do math in a0
-	addi	$a0, $v0, -32	# $v0 has our input values
-	mul	$a0, $a0, 5	# just do all math straight in $a0
-	div	$a0, $a0, 9
+	addi	$t0, $v0, -32	# $v0 has our input values
+	mul	$t0, $t0, 5
+	div	$t0, $t0, 9
 
 	# print out result
+	move	$a0, $t0
 	li	$v0, 1
 	syscall
 
