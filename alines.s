@@ -48,26 +48,23 @@ whileR:	# while read
 	addi	$s0, $s0, 1
 	b	whileR
 endR:
-	li	$s0, 0	# start at line 0
+	li	$s1, 0	# start at line 0
 
 whileP:	# while print
-	beq	$s0, 10, endP
+	beq	$s1, $s0, endP	# loop until same number as read
 
 	la	$t0, lines	# base
-	sll	$t1, $s0, 2	# offset
+	sll	$t1, $s1, 2	# offset
 	add	$t2, $t0, $t1	# effective address
 
+	lw	$s2, ($t2)	# current string
 
-	lw	$s1, ($t2)	# current string
-	beqz	$s1, endP	# end if current address is 0
-
-	move	$a0, $s1
-
+	move	$a0, $s2
 	jal	cstrlen
-	move	$s2, $v0
+	move	$s3, $v0
 
 	# Print length
-	move	$a0, $s2
+	move	$a0, $s3
 	li	$v0, 1
 	syscall
 
@@ -77,18 +74,18 @@ whileP:	# while print
 	syscall
 
 	# Print string
-	move	$a0, $s1
+	move	$a0, $s2
 	li	$v0, 4
 	syscall
 
-	addi	$s0, $s0, 1
+	addi	$s1, $s1, 1
 
 	b	whileP
 endP:
 	li	$v0, 10
 	syscall
 
-gets:	# get user input and store in buf
+gets:	# get user input and store in buffer
 	la	$a0, buffer
 	li	$a1, 40
 	li	$v0, 8
@@ -101,6 +98,7 @@ strdup:	# string to duplicate is in $a0
 	addiu	$sp, $sp, -4
 	sw	$ra, ($sp)
 
+	# DODGY CODE: t8 can't be assumed to stay the same
 	move	$t8, $a0	# save a copy of the start of string
 
 	jal	cstrlen
