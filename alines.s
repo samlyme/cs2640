@@ -11,8 +11,8 @@
 	.data	
 title:	.asciiz	"Lines with Array by S. Ly\n\n"
 prompt:	.asciiz	"Enter text? "
-lines:	.word	0:10
-buffer:	.space	40
+lines:	.word	0:10	# store 10 addresses
+buffer:	.space	40	# trust the user doesn't input more
 
 	.text
 main:
@@ -37,17 +37,54 @@ whileR:	# while read
 	la	$a0, buffer
 	jal	strdup
 
-	la	$t2, lines
-	sll	$t3, $s0, 2
+	move	$t2, $v0	# memory address of new string
 
-	add	$t4, $t2, $t3
+	la	$t3, lines	# base
+	sll	$t4, $s0, 2	# offset
+	add	$t5, $t3, $t4	# effective address
 
-	sw	$v0, ($t4)
+	sw	$t2, ($t5)
 
-	addiu	$s0, $s0, 1
-
+	addi	$s0, $s0, 1
 	b	whileR
-endR:	
+endR:
+	li	$s0, 0	# start at line 0
+
+whileP:	# while print
+	beq	$s0, 10, endP
+
+	la	$t0, lines	# base
+	sll	$t1, $s0, 2	# offset
+	add	$t2, $t0, $t1	# effective address
+
+
+	lw	$s1, ($t2)	# current string
+	beqz	$s1, endP	# end if current address is 0
+
+	move	$a0, $s1
+
+	jal	cstrlen
+	move	$s2, $v0
+
+	# Print length
+	move	$a0, $s2
+	li	$v0, 1
+	syscall
+
+	# Print ':'
+	li	$a0, ':'
+	li	$v0, 11
+	syscall
+
+	# Print string
+	move	$a0, $s1
+	li	$v0, 4
+	syscall
+
+	addi	$s0, $s0, 1
+
+	b	whileP
+endP:
 	li	$v0, 10
 	syscall
 
@@ -59,67 +96,59 @@ gets:	# get user input and store in buf
 
 	jr	$ra
 
+strdup:	# string to duplicate is in $a0
+	# This procedure is NOT a leaf
+	addiu	$sp, $sp, -4
+	sw	$ra, ($sp)
+
+	move	$t8, $a0	# save a copy of the start of string
+
+	jal	cstrlen
+	move	$t0, $v0
+	addi	$t0, $t0, 1	# make room for null terminator
+
+	move	$a0, $t0
+	jal	malloc
+
+	move	$a0, $v0	# address of freshly allocated memory
+	move	$a1, $t8	# source of string
+	jal	strcpy
+
+	lw	$ra, ($sp)
+	addiu	$sp, $sp, 4
+
+	# v0 still contains memory address of new string
+	jr	$ra
+
+strcpy:	# copy a string from a source to a new destination memory
+	# returns start of destination
+	move	$v0, $a0	# known to not change
+whileC:	# while copy
+	lb	$t0, ($a1)
+	sb	$t0, ($a0)
+
+	beqz	$t0, endC
+
+	addi	$a0, $a0, 1
+	addi	$a1, $a1, 1
+
+	b	whileC
+endC:
+	jr	$ra
+	
 cstrlen:	# return length of string excluding null
 	move	$t0, $a0
 	li	$v0, 0	# start counter at 0
-
 whileL:	# while length
 	lb	$t1, ($t0)
 	beqz	$t1, endL
 	addi	$v0, $v0, 1
 	addi	$t0, $t0, 1
+	b	whileL
 endL:
 	jr	$ra
 
-strdup:	# duplicates a string and stores it in heap
-	addiu	$sp, $sp, -4
-	sw	$ra, ($sp)
-
-	# save the pointer to c string
-	addiu	$sp, $sp, -4
-	sw	$a0, ($sp)
-
-	li	$a0, 40
-	jal	malloc
-
-	move	$t0, $v0
-	move	$t9, $v0	# do not touch, need to return
-
-	lw	$t1, ($sp)	# get the pointer to c string
-	addiu	$sp, $sp, 4
-
-	# TEMP: print received c string
-	move	$a0, $t1
-	li	$v0, 4
-	syscall
-
-whileC:	# while copy
-	lb	$t2, ($t1)
-
-	# TEMP: print current copy char
-	move	$a0, $t2
-	li	$v0, 4
-	syscall
-
-	sb	$t2, ($t0)
-
-	beqz	$t1, endC
-
-	addiu	$t0, $t0, 1
-	addiu	$t1, $t1, 1
-
-	b	whileC
-
-endC:	# end copy loop
-	lw	$ra, ($sp)
-	addiu	$sp, $sp, 4
-
-	move	$v0, $t9
-
-	jr	$ra
-
 malloc:
-	# a0 should already have the size
 	li	$v0, 9
 	syscall
 
