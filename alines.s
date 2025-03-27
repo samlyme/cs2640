@@ -47,11 +47,11 @@ whileR:	# while read
 
 	addi	$s0, $s0, 1
 	b	whileR
-endR:
-	li	$s1, 0	# start at line 0
+endR:	# This label is here to maintain the pattern for while loops
+	li	$s1, 0
 
 whileP:	# while print
-	beq	$s1, $s0, endP	# loop until same number as read
+	beq	$s0, $s1, endP	# loop until same number as read
 
 	la	$t0, lines	# base
 	sll	$t1, $s1, 2	# offset
@@ -95,11 +95,11 @@ gets:	# get user input and store in buffer
 
 strdup:	# string to duplicate is in $a0
 	# This procedure is NOT a leaf
-	addiu	$sp, $sp, -4
-	sw	$ra, ($sp)
+	addiu	$sp, $sp, -8
+	sw	$s0, 0($sp)
+	sw	$ra, 4($sp)
 
-	# DODGY CODE: t8 can't be assumed to stay the same
-	move	$t8, $a0	# save a copy of the start of string
+	move	$s0, $a0	# save a copy of the start of string
 
 	jal	cstrlen
 	move	$t0, $v0
@@ -109,11 +109,12 @@ strdup:	# string to duplicate is in $a0
 	jal	malloc
 
 	move	$a0, $v0	# address of freshly allocated memory
-	move	$a1, $t8	# source of string
+	move	$a1, $s0	# source of string
 	jal	strcpy
 
-	lw	$ra, ($sp)
-	addiu	$sp, $sp, 4
+	lw	$s0, 0($sp)
+	lw	$ra, 4($sp)
+	addiu	$sp, $sp, 8
 
 	# v0 still contains memory address of new string
 	jr	$ra
@@ -147,6 +148,7 @@ endL:
 	jr	$ra
 
 malloc:
+	# size should be in a0
 	li	$v0, 9
 	syscall
 
