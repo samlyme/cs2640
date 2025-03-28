@@ -5,7 +5,9 @@
 # Course: cs-2640-03-sp25
 #
 # Description:
-# Prints strings
+# Develop a program that uses an array to store input lines of text and then 
+# outputs the stored lines. The implementation must follow procedure register 
+# calling conventions.
 #
 
 	.data	
