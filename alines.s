@@ -9,10 +9,12 @@
 #
 
 	.data	
+NUM_LINES=10
+MAX_CHARS=40
 title:	.asciiz	"Lines with Array by S. Ly\n\n"
 prompt:	.asciiz	"Enter text? "
-lines:	.word	0:10	# store 10 addresses
-buffer:	.space	40	# trust the user doesn't input more
+lines:	.word	0:NUM_LINES	# store 10 addresses
+buffer:	.space	MAX_CHARS	# trust the user doesn't input more
 
 	.text
 main:
@@ -22,7 +24,7 @@ main:
 
 	li	$s0, 0	# let s0 be the count
 whileR:	# while read
-	beq	$s0, 10, endR
+	beq	$s0, NUM_LINES, endR
 
 	la	$a0, prompt
 	li	$v0, 4
@@ -49,7 +51,6 @@ whileR:	# while read
 	b	whileR
 endR:	# This label is here to maintain the pattern for while loops
 	li	$s1, 0
-
 whileP:	# while print
 	beq	$s0, $s1, endP	# loop until same number as read
 
@@ -87,7 +88,7 @@ endP:
 
 gets:	# get user input and store in buffer
 	la	$a0, buffer
-	li	$a1, 40
+	li	$a1, MAX_CHARS
 	li	$v0, 8
 	syscall
 
