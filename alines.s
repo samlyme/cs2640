@@ -51,7 +51,11 @@ whileR:	# while read
 
 	addi	$s0, $s0, 1
 	b	whileR
-endR:	# This label is here to maintain the pattern for while loops
+endR:
+	li	$a0, '\n'
+	li	$v0, 11
+	syscall
+
 	li	$s1, 0
 whileP:	# while print
 	beq	$s0, $s1, endP	# loop until same number as read
