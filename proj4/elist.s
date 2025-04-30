@@ -1,53 +1,96 @@
+#
+# Name: Ly, Sam
+# Project: 4
+# Due: April 29, 2025
+# Course: cs-2640-03-sp25
+#
+# Description:
+# Use recursion and file I/O to build and traverse linked lists.
+#
 	.data
 head:	.word	0
 ptfname:	.asciiz	"/Users/samly/Documents/code/assembly/proj4/enames.dat"
-
-test1:	.asciiz	"Heliumi00"
-test2:	.asciiz	"Hydrogen"
-test3:	.asciiz	"Lithium"
+title:	.asciiz	"Elements by S. Ly v0.1\n\n"
+nl:	.asciiz	"\n\n"
+buf:	.space	64
 
 	.text
 main:	
-	move	$a0, $sp
+	la	$a0, title
+	li	$v0, 4
+	syscall
+
+	la	$a0, ptfname
+	li	$a1, 0
+	jal	open
+
+	move	$s0, $v0
+	li	$s1, 0
+while:	move	$a0, $s0
+	la	$a1, buf
+	jal	fgetln
+
+	beqz	$v0, endwhile
+
+	la	$a0, buf
+	jal	strdup
+
+	move	$a0, $v0
+	lw	$a1, head
+	jal	getnode
+
+	sw	$v0, head
+
+	addi	$s1, $s1, 1
+	b	while
+endwhile: 
+	move	$a0, $s0
+	jal	close
+
+	move	$a0, $s1
 	li	$v0, 1
 	syscall
 
-	la	$a0, '\n'
-	li	$v0, 11
+	la	$a0, nl
+	li	$v0, 4
 	syscall
 
-	la	$a0, test1
-	la	$a1, 0
-	jal	getnode
-	move	$s0, $v0
-
-	lw	$a0, 0($v0)
-	jal	print
-
-	la	$a0, '\n'
-	li	$v0, 11
-	syscall
-
-	la	$a0, test2
-	move	$a1, $s0
-	jal	getnode
-	move	$s1, $v0
-
-	lw	$a0, 0($v0)
-	jal	print
-
-	la	$a0, '\n'
-	li	$v0, 11
-	syscall
-
-	# save head
-	sw	$s1, head
+	lw	$a0, head
+	la	$a1, print
+	jal	traverse
 
 	li	$v0, 10
 	syscall
 
-getnode: # takes in an address pointing to a cstring, and a "next"
-	# save args
+traverse:
+	# $a0: pointer to head of linked list
+	# $a1: pointer to procedure
+
+	# flow:
+	# if next > 0: traverse next, then print
+	# if next == 0: print and return
+
+	addiu	$sp, $sp, -8
+	sw	$a0, 4($sp)
+	sw	$ra, 0($sp)
+
+	lw	$t0, 4($a0)	# node: 0 = str, 4 = next
+	beqz	$t0, base
+	
+	move	$a0, $t0
+	jal	traverse
+base:	
+	lw	$t0, 4($sp)
+	
+	lw	$a0, 0($t0)
+	jalr	$a1
+	
+	lw	$ra, 0($sp)
+	addiu	$sp, $sp, 8
+	jr $ra
+
+getnode:# $a0: pointer to cstring
+	# $a1: pointer to next
 	addiu	$sp, $sp, -8
 	sw	$a0, 0($sp)
 	sw	$a1, 4($sp)
@@ -83,7 +126,7 @@ getnode: # takes in an address pointing to a cstring, and a "next"
 
 	jr	$ra
 
-print:
+print:	# $a0: pointer to cstring
 	addiu	$sp, $sp, -8
 	sw	$a0, 4($sp)
 	sw	$ra, 0($sp)
@@ -106,7 +149,7 @@ print:
 	addiu	$sp, $sp, 8
 	jr	$ra
 
-strdup:	# string to duplicate is in $a0
+strdup:	# $a0: pointer to cstring
 	# This procedure is NOT a leaf
 	addiu	$sp, $sp, -8
 	sw	$s0, 0($sp)
