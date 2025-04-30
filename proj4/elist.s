@@ -69,25 +69,23 @@ traverse:
 	# flow:
 	# if next > 0: traverse next, then print
 	# if next == 0: print and return
+	beqz	$a0, return
 
 	addiu	$sp, $sp, -8
 	sw	$a0, 4($sp)
 	sw	$ra, 0($sp)
 
 	lw	$t0, 4($a0)	# node: 0 = str, 4 = next
-	beqz	$t0, base
-	
 	move	$a0, $t0
 	jal	traverse
-base:	
+
 	lw	$t0, 4($sp)
-	
 	lw	$a0, 0($t0)
 	jalr	$a1
 	
 	lw	$ra, 0($sp)
 	addiu	$sp, $sp, 8
-	jr $ra
+return:	jr $ra
 
 getnode:# $a0: pointer to cstring
 	# $a1: pointer to next
